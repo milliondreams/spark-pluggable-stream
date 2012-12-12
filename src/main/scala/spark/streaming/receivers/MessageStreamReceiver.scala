@@ -5,37 +5,33 @@ import akka.actor.PoisonPill
 import akka.actor.Props
 
 import spark.storage.StorageLevel
-import spark.streaming.NetworkReceiver
 
-case class SubscribeReceiver(receiverActor: ActorRef) 
+case class SubscribeReceiver(receiverActor: ActorRef)
 case class UnsubscribeReceiver(receiverActor: ActorRef)
 
 class MessageStreamReceiver[T: ClassManifest](urlOfPublisher: String,
   streamId: Int,
-  storageLevel: StorageLevel) extends NetworkReceiver[T](streamId) {
+  storageLevel: StorageLevel) extends AbstractActorReceiver[T](streamId, storageLevel) {
 
-  lazy protected val remotePublisher = env.actorSystem.actorFor(urlOfPublisher)
+  override protected val actorInstanceFactory = () => new MessageReceiverActor
 
-  var receiverActor: ActorRef = _
+  override protected val actorName = "MessageReceiverActor"
 
-  override def onStart() = receiverActor = env.actorSystem.actorOf(
-    Props(new MessageStreamReceiverActor), "MessageStreamReceiver")
+  protected class MessageReceiverActor extends Actor {
 
-  override def onStop() = receiverActor ! PoisonPill
-
-  private class MessageStreamReceiverActor extends Actor {
+    lazy private val remotePublisher = context.actorFor(urlOfPublisher)
 
     override def preStart = remotePublisher ! SubscribeReceiver(context.self)
 
     def receive: Receive = {
       case message =>
-        pushBlock("input-" + streamId + "-" + System.nanoTime, Seq(message.asInstanceOf[T]).iterator, null,storageLevel)
+        pushBlock("input-" + streamId + "-" + System.nanoTime,
+          Seq(message.asInstanceOf[T]).iterator)
     }
 
     override def postStop() = remotePublisher ! UnsubscribeReceiver(context.self)
 
   }
-
 }
 
 

@@ -1,7 +1,5 @@
 ---
-layout: global
-
-title: ZeroMQ Stream setup guide
+# ZeroMQ Stream setup guide
 ---
 
 ## Install ZeroMQ
@@ -32,7 +30,7 @@ A publisher is an entity assumed to be outside the spark ecosystem. A sample zer
 
 1. Start the sample publisher.
 
-{% highlight scala %}
+```scala
 
       val acs: ActorSystem = ActorSystem()
 
@@ -41,27 +39,27 @@ A publisher is an entity assumed to be outside the spark ecosystem. A sample zer
       pubSocket ! ZMQMessage(Seq(Frame("topic"), Frame("My message".getBytes)))
 
 
-{% endhighlight %}
+```
 
 It does nothing more than publishing the message on the specified topic
 
 2. Start the spark application by plugging the zeroMQ stream receiver.
 
-{% highlight scala %}
+```scala
 
-	val lines = ssc.pluggableNetworkStream[String]((x, y) =>
+    val lines = ssc.pluggableNetworkStream[String]((x, y) =>
 
-	new ZeroMQMessageStreamReceiver[String](url, Subscribe("topic"), bytesToObjectsIterator, x, y))
+    new ZeroMQMessageStreamReceiver[String](url, Subscribe("topic"), bytesToObjectsIterator, x, y))
 
-{% endhighlight %}
+```
 
 
 bytesToObjectsIterator is going to be a function for decoding the Frame data.
 
 _For example: For decoding into strings using default charset:_
 
-{% highlight scala %}
+```scala
 
     def bytesToStringIterator(x: Seq[Seq[Byte]]) = (x.map(x => new String(x.toArray))).iterator
 
-{% endhighlight %}
+```

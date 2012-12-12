@@ -21,19 +21,18 @@ class ZeroMQMessageStreamReceiver[T: ClassManifest](urlOfPublisher: String,
   subscribe: Subscribe,
   bytesToObjects: Seq[Seq[Byte]] => Iterator[T],
   streamId: Int,
-  storageLevel: StorageLevel) extends NetworkReceiver[T](streamId) {
+  storageLevel: StorageLevel) extends AbstractActorReceiver[T](streamId, storageLevel) {
 
   require(bytesToObjects != null)
 
-  var receiverActor: ActorRef = _
+  override protected val actorInstanceFactory = () => new ZeroMQMessageReceiverActor
 
-  override def onStart = receiverActor = env.actorSystem.actorOf(Props(new ZeroMQMessageStreamReceiverActor), "ZeroMQMessageStreamReceiver")
+  override protected val actorName = "ZeroMQMessageReceiver"
 
-  override def onStop() = receiverActor ! PoisonPill
+  protected class ZeroMQMessageReceiverActor extends Actor with Logging {
 
-  private class ZeroMQMessageStreamReceiverActor extends Actor with Logging {
-
-    override def preStart() = context.system.newSocket(SocketType.Sub, Listener(self), Connect(urlOfPublisher), subscribe)
+    override def preStart() = context.system.newSocket(SocketType.Sub, Listener(self),
+      Connect(urlOfPublisher), subscribe)
 
     def receive: Receive = {
 
@@ -44,7 +43,7 @@ class ZeroMQMessageStreamReceiver[T: ClassManifest](urlOfPublisher: String,
 
         //We ignore first frame for processing as it is the topic
         val bytes = m.frames.tail.map(_.payload)
-        pushBlock("input-" + streamId + "-" + System.nanoTime, bytesToObjects(bytes), null,storageLevel)
+        pushBlock("input-" + streamId + "-" + System.nanoTime, bytesToObjects(bytes))
 
       case Closed => logInfo("received closed ")
 
