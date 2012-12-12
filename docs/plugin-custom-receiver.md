@@ -1,4 +1,3 @@
-
 ---
 # Tutorial - Spark streaming, Plugging in a custom receiver.
 ---
@@ -23,7 +22,7 @@ class SocketStreamReceiver(host: String,
   streamId: Int,
   storageLevel: StorageLevel) extends AbstractActorReceiver[String](streamId, storageLevel) {
 
-    override protected val actorInstance = () => new SocketReceiverActor
+    override protected val actorInstanceFactory = () => new SocketReceiverActor
 
     override protected val actorName = "SocketReceiver"
 
