@@ -16,7 +16,7 @@ This starts with implementing AbstractActorReceiver.
 Following is a simple socket text-stream receiver, which is appearently overly simplified using Akka's socket.io api.
 
 ```scala
-class SocketStreamReceiver(host: String,
+class SocketTextStreamReceiver(host: String,
   port: Int,
   bytesToObjects: ByteString => Iterator[String],
   streamId: Int,
@@ -82,8 +82,9 @@ _Please see implementations of NetworkReceiver for more generic NetworkReceivers
 * After processing it, stream can be tested using the netcat utility.
 
      $ nc -l localhost 8445
+     
      hello world
-     hello hello
+
 
 
 ## Multiple homogeneous/heterogeneous receivers.
@@ -102,8 +103,6 @@ A DStream union operation is provided for taking union on multiple input streams
 
 ```
 
-Above stream can be easily process as described earlier.
-
 _A more comprehensive example is provided in the spark streaming examples_
 
 
@@ -113,7 +112,7 @@ Multiple receivers may receive streams from different sources and preprocessing/
 
 * Let us write a function for filtering word "hello" from input stream.
 
-  A more practical application can be filtering a stream of stocks or a stream of social media with "interesting words"
+  _A more practical application can be filtering a stream of stocks or a stream of social media with "interesting words"_
 
 ```scala
 
